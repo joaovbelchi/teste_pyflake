@@ -1,0 +1,32 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: "{{ params.app_name }}-{{macros.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}}"
+  namespace: "{{ params.app_namespace | default('processing') }}"
+spec:
+  timeToLiveSeconds: {{ params.timeToLiveSeconds | default('7200') }}
+  type: Python
+  pythonVersion: "3"
+  mode: cluster
+  image: "{{ var.value.get('aws_account_id') }}.dkr.ecr.us-east-1.amazonaws.com/spark-container:latest"
+  imagePullPolicy: Always
+  mainApplicationFile: "{{ params.mainApplicationFile }}"
+  sparkVersion: "3.0.0"
+  restartPolicy:
+    type: Never
+    
+  driver:
+    cores: {{ params.driverCores | default(1) }}
+    coreRequest: {{ params.driverCoreRequest | default('1000m') }}
+    coreLimit: {{ params.driverCoreLimit | default('1500m') }}
+    memory: {{ params.driverMemory | default('10G') }}
+    labels:
+      version: 3.0.0
+  executor:
+    cores: {{ params.executorCores | default(1) }}
+    instances: {{ params.executorInstances  | default(1) }}
+    coreRequest: {{ params.executorCoreRequest | default('1000m') }}
+    coreLimit: {{ params.executorCoreLimit | default('1500m') }}
+    memory: {{ params.executorMemory | default('8G') }}
+    labels:
+      version: 3.0.0

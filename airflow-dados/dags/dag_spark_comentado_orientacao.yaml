@@ -1,0 +1,32 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2" #imagem do sparkOperator
+kind: SparkApplication
+metadata:
+  name: "{{ params.app_name }}-{{macros.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}}" #Define um nome para o aplicativo, que será mostrado na interface 
+  namespace: "{{ params.app_namespace | default('processing') }}" #namespace kubernetes para colocar sparkApplication
+spec:
+  timeToLiveSeconds: {{ params.timeToLiveSeconds | default('7200') }}
+  type: Python   #Type informa o tipo do aplicativo Spark.
+  pythonVersion: "3" #Isso define a versão principal do Python da imagem do docker usada para executar os contêineres de driver e executor. Pode ser 2 ou 3, padrão 2.
+  mode: cluster    #O modo é o modo de implantação do aplicativo Spark.
+  image: "600664643760.dkr.ecr.us-east-1.amazonaws.com/spark-container:latest" #Image é a imagem do contêiner para o driver, executor e init-container. Quaisquer imagens de contêiner personalizadas para o driver, executor ou contêiner de inicialização têm precedência sobre isso.
+  imagePullPolicy: Always   #ImagePullPolicy é a política de extração de imagem para o driver, executor e contêiner de inicialização.
+  mainApplicationFile: "{{ params.mainApplicationFile }}" #MainFile é o caminho para um arquivo JAR, Python ou R empacotado do aplicativo.
+  sparkVersion: "3.0.0"  #SparkVersion é a versão do Spark que o aplicativo usa.
+  restartPolicy: #RestartPolicy define a política sobre se e em quais condições o controlador deve reiniciar um aplicativo.
+    type: Never
+    
+  driver: #Driver é a especificação do driver.
+    cores: {{ params.driverCores | default(1) }}  #Os núcleos são mapeados para spark.driver.coresou spark.executor.corespara o driver e executores, respectivamente.
+    coreRequest: {{ params.driverCoreRequest | default('250m') }} #CoreRequest é a solicitação de núcleo de CPU física para o driver. Maps para
+    coreLimit: {{ params.driverCoreLimit | default('500m') }} #CoreLimit especifica um limite rígido em núcleos de CPU para o pod. Opcional
+    memory: {{ params.driverMemory | default('1G') }}  #Memória é a quantidade de memória a ser solicitada para o pod.
+    labels: #Rótulos são os rótulos do Kubernetes a serem adicionados ao pod.
+      version: 3.0.0
+  executor: #ExecutorSpec é a especificação do executor.
+    cores: {{ params.executorCores | default(2) }}  #Os núcleos são mapeados para spark.driver.coresou spark.executor.corespara o driver e executores, respectivamente.
+    instances: {{ params.executorInstances  | default(1) }}  #Instâncias é o número de instâncias do executor.
+    coreRequest: {{ params.executorCoreRequest | default('250m') }} #CoreRequest é a solicitação de núcleo de CPU física para o driver.
+    coreLimit: {{ params.executorCoreLimit | default('400m') }} #CoreLimit especifica um limite rígido em núcleos de CPU para o pod. Opcional
+    memory: {{ params.executorMemory | default('1G') }}  #Memória é a quantidade de memória a ser solicitada para o pod.
+    labels: #Rótulos são os rótulos do Kubernetes a serem adicionados ao pod.
+      version: 3.0.0
